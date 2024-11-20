@@ -259,6 +259,7 @@ FROM pre_result
 |BB Ball Bearing|2011                         |6     |5259       |         |0    |
 |Blade          |2011                         |12    |1842       |3598     |-48.8|
 |Blade          |2011                         |11    |3598       |4670     |-23  |
+|...          |...                         |...    |...       |...     |...  |
 
 **5.7 Calc Ratio of Stock / Sales in 2011 by product name, by month**
 
