@@ -135,22 +135,14 @@ SELECT
   EXTRACT(year FROM sod.ModifiedDate) AS year
   ,ps.name AS subcategory
   ,ROUND(SUM(sod.OrderQty*sod.UnitPrice*so.DiscountPct),2)  AS total_cost
-FROM
-  `adventureworks2019.Sales.SalesOrderDetail` sod
-LEFT JOIN
-  `adventureworks2019.Sales.SpecialOffer`  so
-ON
-  sod.SpecialOfferID = so.SpecialOfferID
-LEFT JOIN
-  `adventureworks2019.Production.Product`  p
-ON
-  sod.ProductID = p.ProductID
-LEFT JOIN
-  `adventureworks2019.Production.ProductSubcategory`  ps
-ON
-  CAST(p.ProductSubcategoryID AS INT) = ps.ProductSubcategoryID
-WHERE
-  LOWER(so.type) LIKE '%seasonal discount%'
+FROM `adventureworks2019.Sales.SalesOrderDetail` sod
+LEFT JOIN `adventureworks2019.Sales.SpecialOffer`  so
+ON sod.SpecialOfferID = so.SpecialOfferID
+LEFT JOIN `adventureworks2019.Production.Product`  p
+ON sod.ProductID = p.ProductID
+LEFT JOIN `adventureworks2019.Production.ProductSubcategory`  ps
+ON CAST(p.ProductSubcategoryID AS INT) = ps.ProductSubcategoryID
+WHERE LOWER(so.type) LIKE '%seasonal discount%'
 GROUP BY 1,2
 ~~~~
 
@@ -170,32 +162,24 @@ raw_data_1 AS(
     EXTRACT(month FROM ShipDate) AS month_join
     ,CustomerID
     ,COUNT(SalesOrderID) AS sales_cnt
-  FROM
-    `adventureworks2019.Sales.SalesOrderHeader`
-  WHERE
-    EXTRACT(year FROM ShipDate) = 2014
-    AND status = 5
+  FROM `adventureworks2019.Sales.SalesOrderHeader`
+  WHERE EXTRACT(year FROM ShipDate) = 2014 AND status = 5
   GROUP BY 1,2
   ORDER BY 2),
-
-  raw_data_2 AS(
+raw_data_2 AS(
   SELECT
     *
     ,ROW_NUMBER() OVER(PARTITION BY customerid ORDER BY month_join) AS num
-  FROM
-    raw_data_1
+  FROM raw_data_1
   ORDER BY 1),
 
   first_order AS(
   SELECT
     raw_data_2.month_join AS month_order,
     CustomerID
-  FROM
-    raw_data_2
-  WHERE
-    num = 1
+  FROM raw_data_2
+  WHERE num = 1
   ORDER BY 2),
-
   all_join AS(
   SELECT
     r1.month_join,
@@ -203,21 +187,15 @@ raw_data_1 AS(
     f.month_order,
     CONCAT('M - ',r1.month_join - f.month_order) AS month_diff,
     r1.sales_cnt
-  FROM
-    raw_data_1 AS r1
-  LEFT JOIN
-    first_order AS f
-  ON
-    r1.customerID = f.customerID
-  ORDER BY
-    2)
+  FROM raw_data_1 AS r1
+  LEFT JOIN first_order AS f ON r1.customerID = f.customerID
+  ORDER BY 2)
 
 SELECT
-  month_join,
-  month_diff,
-  COUNT(customerID) AS customer_cnt
-FROM
-  all_join
+  month_join
+  ,month_diff
+  ,COUNT(customerID) AS customer_cnt
+FROM all_join
 GROUP BY 1,2
 ORDER BY 1
 ~~~~
@@ -243,14 +221,9 @@ WITH raw_data AS (
     ,EXTRACT(year FROM w.ModifiedDate) AS yr
     ,EXTRACT(month FROM w.ModifiedDate) AS mth
     ,SUM(w.StockedQty) AS Stock_curr
-  FROM
-    `adventureworks2019.Production.Product`AS p
-  LEFT JOIN
-    `adventureworks2019.Production.WorkOrder` AS w
-  ON
-    p.ProductID = w.ProductID
-  WHERE
-    EXTRACT(year FROM w.ModifiedDate) = 2011
+  FROM `adventureworks2019.Production.Product`AS p
+  LEFT JOIN `adventureworks2019.Production.WorkOrder` AS w ON p.ProductID = w.ProductID
+  WHERE EXTRACT(year FROM w.ModifiedDate) = 2011
   GROUP BY 1,2,3
   ORDER BY 1,2,3 DESC
   ),
@@ -261,19 +234,17 @@ WITH raw_data AS (
     ,mth
     ,Stock_curr
     ,LEAD(Stock_curr) OVER(PARTITION BY Name ORDER BY mth DESC) AS Stock_prv
-  FROM
-    raw_data
+  FROM raw_data
   ORDER BY 1)
 SELECT
    *
   ,CASE
-    WHEN (100.0 * (Stock_curr - Stock_prv)/Stock_prv) IS NULL THEN 0
-  ELSE
-  ROUND((100.0 * (Stock_curr - Stock_prv)/Stock_prv),1)
-END
+            WHEN (100.0 * (Stock_curr - Stock_prv)/Stock_prv) IS NULL THEN 0
+          ELSE
+          ROUND((100.0 * (Stock_curr - Stock_prv)/Stock_prv),1)
+   END
   AS diff
-FROM
-  pre_result
+FROM pre_result
 ~~~~
 
 **RESULT**
@@ -344,7 +315,8 @@ WITH
 |12   |2011                         |750      |Road-150 Red, 44|25       |38        |1.5  |
 |...   |...                         |...      |...|...       |...        |...  |
 
-**5.8 No of order and value at Pending status in 2014 **
+
+**5.8 No of order and value at Pending status in 2014**
 ~~~~sql
 SELECT 
     EXTRACT (YEAR FROM ModifiedDate) AS yr
